@@ -1,0 +1,113 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract DigitalMoneyTransfer {
+
+    mapping(address => uint256) private balances;
+    bool private locked; // reentrancy guard
+
+    event Deposited(address indexed user, uint256 amount);
+    event Transferred(address indexed from, address indexed to, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+
+    // Reentrancy guard modifier
+    modifier noReentrant() {
+        require(!locked, "Reentrancy detected");
+        locked = true;
+        _;
+        locked = false;
+    }
+
+    // Deposit Ether
+    function deposit() public payable {
+        require(msg.value > 0, "Deposit must be greater than zero");
+        balances[msg.sender] += msg.value;
+        emit Deposited(msg.sender, msg.value);
+    }
+
+    // Internal transfer
+    function transfer(address to, uint256 amount) public {
+        require(to != address(0), "Invalid address");
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+
+        balances[msg.sender] -= amount;
+        balances[to] += amount;
+
+        emit Transferred(msg.sender, to, amount);
+    }
+
+    // Withdraw Ether (SAFE WAY)
+    function withdraw(uint256 amount) public noReentrant {
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+
+        // Effects
+        balances[msg.sender] -= amount;
+
+        // Interaction
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Ether transfer failed");
+
+        emit Withdrawn(msg.sender, amount);
+    }
+
+    // View balance
+    function getBalance() public view returns (uint256) {
+        return balances[msg.sender];
+    }
+}
+
+
+
+
+Steps to run this code 
+
+🚀 Step-by-Step Implementation
+✅ 1. Open Remix IDE
+Go to: https://remix.ethereum.org
+This is an online tool—no installation needed
+✅ 2. Create a New Solidity File
+In the left sidebar → click File Explorer
+Click “+” (New File)
+Name it:
+DigitalMoneyTransfer.sol
+✅ 3. Paste Your Code
+Copy the cleaned code I gave you
+Paste it into the file
+✅ 4. Compile the Contract
+Go to Solidity Compiler tab (⚙️ icon)
+Select compiler version:
+0.8.20
+Click Compile DigitalMoneyTransfer.sol
+
+✔️ If no errors → you're good
+
+✅ 5. Deploy the Contract
+Go to Deploy & Run Transactions tab (🚀 icon)
+Choose Environment:
+For testing (recommended):
+Remix VM (Cancun)
+Then:
+Select contract → DigitalMoneyTransfer
+Click Deploy
+✅ 6. Interact with Contract
+
+After deployment, you'll see functions:
+
+💰 Deposit Ether
+Enter value (e.g., 1 Ether)
+Click deposit
+✔️ Your balance increases
+🔄 Transfer Money
+Enter:
+to = another address (copy from Remix accounts)
+amount = value in wei (e.g., 1000000000000000000 = 1 ETH)
+Click transfer
+💸 Withdraw Ether
+Enter amount
+Click withdraw
+
+✔️ Ether sent back to your account
+
+📊 Check Balance
+Click getBalance
+✔️ Shows your stored balance
